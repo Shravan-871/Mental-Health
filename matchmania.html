@@ -4,6 +4,37 @@
 <head>
     <title>Match Mania</title>
     <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #game-container {
+            width: 100%;
+            height: 100vh;
+            background-color: lavender;
+        }
+
+        #message-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #message {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             display: flex;
             justify-content: center;
@@ -16,7 +47,7 @@
 
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(4, 100px);
+            grid-template-columns: repeat(3, 100px);
             gap: 10px;
         }
 
@@ -63,8 +94,9 @@
         <p>Score: <span id="score">0</span></p>
     </div>
     <script>
-        const initialColorNames = ["Red", "Orange", "Green", "Blue", "Purple", "Pink", "Magenta"];
-        const initialBoxColors = ["#ff0000", "#ff6600", "#00cc00", "#0000ff", "#6600cc", "#ff66cc", "#ff00ff"];
+        const initialColorNames = ["Red", "Orange", "Green", "Blue", "Purple", "Pink"];
+        const initialBoxColors = ["#FFCCCC", "#FFD699", "#CCFFCC", "#CCE5FF", "#E5CCFF", "#FFCCFF", "#FF99CC"];
+
         const poolSize = 30; // Maximum number of squares in the pool
 
         let colorNames = initialColorNames.slice();
@@ -115,7 +147,7 @@
             const shuffledColorNames = colorNames.slice();
             shuffleColors(shuffledColorNames);
 
-            const totalBoxes = shuffledBoxColors.length + boxesToAdd;
+            const totalBoxes = 6 + boxesToAdd;
 
             for (let i = 0; i < totalBoxes; i++) {
                 let square;
@@ -226,11 +258,14 @@
                 colorsToAdd = 2; // Increase the number of colors to add to 2 after reaching a score of 30.
             }
 
+
             if (score >= 20) {
                 boxesToAdd = 6; // Increase the number of boxes to add to 6 after reaching a score of 20.
             } else if (score >= 10) {
-                boxesToAdd = 3; // Keep the default number of boxes to add as 3 for scores between 10 and 20.
+                boxesToAdd = 3;
+                // Keep the default number of boxes to add as 3 for scores between 10 and 20.
             }
+
         }
     </script>
 </body>

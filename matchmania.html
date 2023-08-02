@@ -74,8 +74,43 @@
             /* Change the font family here */
         }
 
-        #hint,
+        #hint {
+            position: top;
+        }
+
         #time {
+            position: absolute;
+            top: 10px;
+            /* Adjust the top distance as needed */
+            left: 10px;
+            /* Adjust the right distance as needed */
+            width: 350px;
+            height: 100px;
+            background-color: #af4407eb;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        #score1 {
+            position: absolute;
+            top: 10px;
+            /* Adjust the top distance as needed */
+            right: 10px;
+            /* Adjust the right distance as needed */
+            width: 350px;
+            height: 100px;
+            background-color: #4cc391;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            font-size: 16px;
             margin-bottom: 10px;
         }
 
@@ -87,11 +122,18 @@
 </head>
 
 <body>
-    <div id="hint">Click on: <span id="hintColor"></span></div>
-    <div id="time">Time Left: <span id="timeLeft">120</span> seconds</div>
+    <div id="hint">
+        <font size="10" color="red">Click on: </font>
+        <font color="green" size="10"><span id="hintColor"></font></span>
+    </div>
+    <div id="time">
+        <font size="6">Time Left: <span id="timeLeft">120</span> seconds</font>
+    </div>
     <div class="grid-container" id="gameBoard"></div>
-    <div>
-        <p>Score: <span id="score">0</span></p>
+    <div id="score1">
+        <font size="10">
+            Score: <span id="score"></span>
+        </font>
     </div>
     <script>
         const initialColorNames = ["Red", "Orange", "Green", "Blue", "Purple", "Pink"];

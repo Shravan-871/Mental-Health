@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Color Switcher Game</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      
+      background-color: lavenderblush;
+    }
+
+    #game-container {
+      text-align: center;
+    }
+
+    .color-box {
+      width: 100px;
+      height: 100px;
+      margin: 10px;
+      border: 2px solid black;
+      display: inline-block;
+    }
+
+    .color-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
+      cursor: pointer;
+      color:black;
+      background-color: lavender;
+    }
+
+    #message {
+      font-size: 18px;
+      margin-top: 10px;
+      padding: 10px 50px;
+      background-color: rgb(254, 254, 254);
+    }
+    #start-btn{
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
+      color: black;
+      background-color: lavender;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <div class="color-box" id="target-color-1"></div>
+    <div class="color-box" id="target-color-2"></div>
+    <div class="color-box" id="target-color-3"></div>
+    <div id="color-btn-container">
+      <button class="color-btn">Red</button>
+      <button class="color-btn">Blue</button>
+      <button class="color-btn">Green</button>
+      <button class="color-btn">Yellow</button>
+      <button class="color-btn">Purple</button>
+      <button class="color-btn">Orange</button>
+    </div>
+    <div id="message"></div>
+    <p>Time left: <span id="time-left">60</span> seconds</p>
+    <p>Score: <span id="score">0</span></p>
+    <button id="start-btn">Start Game</button>
+  </div>
+
+  <script>
+    const targetColors = [document.getElementById("target-color-1"), document.getElementById("target-color-2"), document.getElementById("target-color-3")];
+    const colorButtons = document.querySelectorAll(".color-btn");
+    const colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+    let targetColorPatterns = [];
+    let playerColorPatterns = [];
+    let score = 0;
+    let timeLeft = 60;
+    let gameStarted = false;
+
+    function getRandomColor() {
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function getRandomColorPattern() {
+      const pattern = [];
+      for (let i = 0; i < 3; i++) {
+        pattern.push(getRandomColor());
+      }
+      return pattern;
+    }
+
+    function setRandomTargetColorPatterns() {
+      targetColorPatterns = [];
+      for (let i = 0; i < 3; i++) {
+        const pattern = getRandomColorPattern();
+        targetColorPatterns.push(pattern);
+        setTargetColorBox(i, pattern);
+      }
+      setTimeout(() => {
+        resetTargetColorBoxes();
+      }, 4000);
+    }
+
+    function setTargetColorBox(index, pattern) {
+      const targetColorBox = targetColors[index];
+      targetColorBox.style.backgroundColor = pattern[0];
+      setTimeout(() => {
+        targetColorBox.style.backgroundColor = pattern[1];
+        setTimeout(() => {
+          targetColorBox.style.backgroundColor = pattern[2];
+        }, 2000);
+      }, 2000);
+    }
+
+    function resetTargetColorBoxes() {
+      targetColors.forEach((targetColorBox) => {
+        targetColorBox.style.backgroundColor = "transparent";
+      });
+    }
+
+    function checkColorMatch(e) {
+      if (!gameStarted) return;
+
+      const selectedColor = e.target.textContent.toLowerCase();
+      playerColorPatterns.push(selectedColor);
+
+      if (
+        playerColorPatterns.length === targetColorPatterns.length &&
+        JSON.stringify(playerColorPatterns) === JSON.stringify(targetColorPatterns)
+      ) {
+        score++;
+        document.getElementById("score").textContent = score;
+        showMessage("Congratulations! You matched all color patterns.", "success");
+        playerColorPatterns = [];
+        setRandomTargetColorPatterns();
+      } else if (
+        playerColorPatterns.length === targetColorPatterns.length &&
+        JSON.stringify(playerColorPatterns) !== JSON.stringify(targetColorPatterns)
+      ) {
+        showMessage("Try again! The color patterns are different.", "error");
+        playerColorPatterns = [];
+        setTimeout(() => {
+          resetTargetColorBoxes();
+        }, 6000);
+      }
+    }
+
+    function showMessage(message, messageType) {
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = message;
+      messageDiv.style.color = messageType === "success" ? "green" : "red";
+    }
+
+    function startGame() {
+      if (!gameStarted) {
+        gameStarted = true;
+        score = 0;
+        document.getElementById("score").textContent = score;
+        timeLeft = 60;
+        document.getElementById("time-left").textContent = timeLeft;
+
+        const intervalId = setInterval(() => {
+          timeLeft--;
+          document.getElementById("time-left").textContent = timeLeft;
+
+          if (timeLeft <= 0) {
+            clearInterval(intervalId);
+            gameStarted = false;
+            colorButtons.forEach((button) => {
+              button.removeEventListener("click", checkColorMatch);
+            });
+            showMessage("Game Over! Time's up.", "error");
+          }
+        }, 1000);
+
+        colorButtons.forEach((button) => {
+          button.addEventListener("click", checkColorMatch);
+        });
+
+        setRandomTargetColorPatterns();
+      }
+    }
+
+    document.getElementById("start-btn").addEventListener("click", startGame);
+  </script>
+</body>
+</html>

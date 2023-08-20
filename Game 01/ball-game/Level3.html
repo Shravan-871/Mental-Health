@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Catch the Ball Game</title>
+  <link rel="stylesheet" type="text/css" href="b.css">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+    <div id="message-container">
+      <p id="message"></p>
+    </div>
+    <div id="score-container">
+      <p id="score">Score: 0</p>
+    </div>
+    <div id="timer-container">
+      <p id="timer">Time: 0s</p>
+    </div>
+  </div>
+
+  <script>
+    // JavaScript code goes here
+    // Get the canvas element and its context
+    const canvas = document.getElementById("game-canvas");
+    const context = canvas.getContext("2d");
+
+    // Set the canvas size
+    canvas.width = 800; // Adjust the width as needed
+    canvas.height = 600; // Adjust the height as needed
+
+    // Paddle properties
+    const paddleWidth = 100;
+    const paddleHeight = 10;
+    let paddleX = (canvas.width - paddleWidth) / 2;
+
+    // Ball properties
+    const ballRadius = 5;
+    const balls = [];
+
+    // Function to create a new ball
+    function createBall(x, y, speedX, speedY, color) {
+      balls.push({
+        x: x,
+        y: y,
+        speedX: speedX,
+        speedY: speedY,
+        color: color
+      });
+    }
+
+    // Variable to keep track of the player's score
+    let score = 0;
+    let ballCollidedWithPaddle = false;
+
+    // Function to update and display the score
+    function updateScore() {
+      const scoreElement = document.getElementById("score");
+      scoreElement.textContent = `Score: ${score}`;
+    }
+
+    // Function to increment the score when a ball is caught correctly
+    function incrementScore() {
+      score += 1;
+      updateScore();
+    }
+
+    // Function to decrement the score when a ball is caught incorrectly
+    function decrementScore() {
+      score = Math.max(0, score - 1);
+      updateScore();
+    }
+
+    // Function to display the timer on the screen
+    function displayTimer() {
+      const timerElement = document.getElementById("timer");
+      timerElement.textContent = `Time: ${remainingTime}s`;
+    }
+
+    // Paddle movement
+    document.addEventListener("mousemove", (event) => {
+      const relativeX = event.clientX - canvas.offsetLeft;
+      if (relativeX > 0 && relativeX < canvas.width) {
+        paddleX = relativeX - paddleWidth / 2;
+      }
+    });
+
+    // Function to randomly create a new ball
+    function spawnRandomBall() {
+      const colors = ["Crimson", "White", "LightPink", "LightSkyBlue", "Yellow","Orange","PaleGreen"];
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      const randomX = Math.random() * (canvas.width - 2 * ballRadius) + ballRadius;
+      const randomSpeedX = (Math.random() * 4 - 2) * (Math.random() < 0.5 ? -1 : 1); // Random speed between -2 and 2
+      const randomSpeedY = (Math.random() * 4 - 2) * (Math.random() < 0.5 ? -1 : 1); // Random speed between -2 and 2
+      createBall(randomX, ballRadius, randomSpeedX, randomSpeedY, randomColor);
+    }
+
+    // Function to randomly select a ball for the player to balance
+    function selectBallToBalance() {
+      const balanceableBalls = balls.filter(ball => ball.color !== "Green"); // Exclude the green ball
+      currentBalancedBall = balanceableBalls[Math.floor(Math.random() * balanceableBalls.length)];
+      const message = `Balance the ${currentBalancedBall.color} ball!`;
+      displayInstructionMessage(message);
+    }
+
+    // Function to randomly select a ball for the player not to balance
+    function selectBallNotToBalance() {
+      currentBalancedBall = balls[Math.floor(Math.random() * balls.length)];
+      const message = `Do NOT balance the ${currentBalancedBall.color} ball!`;
+      displayInstructionMessage(message);
+    }
+
+    // Function to check if the player balanced the correct ball
+    function checkBalancedBall() {
+      if (currentBalancedBall && remainingTime === 0) {
+        selectedBallFallen = true;
+        endGame("Time's up! Game Over");
+      } else if (currentBalancedBall) {
+        const ballOnPaddle = balls.find(ball => ball.color === currentBalancedBall.color && ball.y + ballRadius > canvas.height - paddleHeight);
+
+        if (!selectedBallFallen) {
+          if (ballOnPaddle && instructionType === "balance") {
+            incrementScore(); // Increment the score if the player catches the correct ball
+            //updateScore();
+            
+          } else if (!ballOnPaddle && instructionType === "balance") {
+            selectedBallFallen = true;
+            decrementScore(); // Decrement the score if the player fails to catch the correct ball
+            //updateScore();
+        
+          } else if (ballOnPaddle && instructionType === "not balance") {
+            selectedBallFallen = true;
+            decrementScore(); // Decrement the score if the player catches the wrong ball
+            //updateScore();
+    
+          }
+        }
+
+        // Spawn a new ball and instruction after processing the current one
+        if (selectedBallFallen) {
+          setTimeout(() => {
+            selectedBallFallen = false;
+            selectBallAndInstruction();
+          }, 2000); // Wait for 2 seconds before spawning a new ball
+        }
+      }
+    }
+
+    // Create multiple balls with random positions and speeds
+    createBall(100, 30, 2, -2, "Crimson");
+    createBall(300, 50, 3, -3, "White");
+    createBall(500, 20, -1, -2, "PaleGreen");
+    createBall(200, 20, -1, -2, "Crimson");
+    createBall(400, 10, -2, 3, "PaleGreen");
+    createBall(150, 40, -2, 1, "White");
+    createBall(250, 20, -1, 3, "White");
+    createBall(350, 40, 3, -1, "PaleGreen");
+    createBall(450, 20, -2, 3, "Crimson");
+
+    // Game duration (in seconds)
+    const gameDuration = 60; // Set the duration as you like (e.g., 60 seconds)
+
+    // Ball spawn interval (in seconds)
+    const ballSpawnInterval = 0.2; // 
+
+    // Ball balance interval (in seconds)
+    const ballBalanceInterval = 5; // 
+
+    // Variable to keep track of the remaining time
+    let remainingTime = gameDuration;
+
+    // Variable to track the start time when the game begins
+    let startTime = null;
+
+    // Variable to keep track of the time for ball spawning and balancing
+    let lastBallSpawnTime = null;
+    let lastBallBalanceTime = null;
+    let currentBalancedBall = null;
+    let instructionType = null;
+
+    // Variable to track if the game is over
+    let gameOver = false;
+
+    // Variable to track if the selected ball has fallen
+    let selectedBallFallen = false;
+
+    // Function to display the timer on the screen
+    function displayTimer() {
+      const timerElement = document.getElementById("timer");
+      timerElement.textContent = `Time: ${remainingTime}s`;
+    }
+
+    // Function to start a new game
+    function startNewGame() {
+      // Reset game variables
+      balls.length = 0;
+      remainingTime = gameDuration;
+      startTime = null;
+      lastBallSpawnTime = null;
+      lastBallBalanceTime = null;
+      currentBalancedBall = null;
+      selectedBallFallen = false;
+      gameOver = false;
+
+      // Hide the message
+      hideMessage();
+
+      
+
+      // Create multiple balls with random positions and speeds
+      createBall(100, 30, 2, -2, "Crimson");
+      createBall(300, 50, 3, -3, "White");
+      createBall(500, 20, -1, -2, "PaleGreen");
+      createBall(200, 20, -1, -2, "Crimson");
+      createBall(400, 10, -2, 3, "PaleGreen");
+      createBall(150, 40, -2, 1, "White");
+      createBall(250, 20, -1, 3, "Orange");
+      createBall(350, 40, 3, -1, "PaleGreen");
+      createBall(450, 20, -2, 3, "Crimson");
+      createBall(100, 30, 2, -2, "Orange");
+      createBall(300, 50, 3, -3, "White");
+      createBall(500, 20, -1, -2, "PaleGreen");
+      createBall(220, 20, -1, -2, "Crimson");
+      createBall(340, 10, -2, 3, "PaleGreen");
+      createBall(630, 40, -2, 1, "Blue");
+      createBall(250, 20, -1, 3, "White");
+      createBall(190, 80, 3, -1, "Orange");
+      createBall(420, 20, -2, 3, "Crimson");
+
+      // Start the game loop again
+      gameLoopInterval = setInterval(gameLoop, 1000 / 60);
+    }
+
+    // Function to end the game
+    function endGame(message) {
+      if (!gameOver) {
+        gameOver = true;
+        clearInterval(gameLoopInterval); // Stop the game loop
+        document.getElementById("message").textContent = message;
+        document.getElementById("message").style.display = "block"; // Show the message
+        updateScore(); // Update the score when the game ends
+      }
+    }
+
+    // Function to select a ball and an instruction for the player
+    function selectBallAndInstruction() {
+      if (Math.random() < 0.5) {
+        instructionType = "balance";
+        selectBallToBalance();
+      } else {
+        instructionType = "not balance";
+        selectBallNotToBalance();
+      }
+    }
+
+    // Game loop
+    let gameLoopInterval = setInterval(gameLoop, 1000 / 60);
+
+    function gameLoop() {
+      // Check if the game is over
+      if (gameOver) return;
+
+      // Clear the canvas
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw the paddle
+      context.beginPath();
+      context.rect(paddleX, canvas.height - paddleHeight, paddleWidth, paddleHeight);
+      context.fillStyle = "black";
+      context.fill();
+      context.closePath();
+
+      // Draw and move each ball
+      balls.forEach(ball => {
+        context.beginPath();
+        context.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2);
+        context.fillStyle = ball.color;
+        context.fill();
+        context.closePath();
+
+        // Move the ball
+        ball.x += ball.speedX;
+        ball.y += ball.speedY;
+
+        // Bounce the ball off the walls
+        if (ball.x + ballRadius > canvas.width || ball.x - ballRadius < 0) {
+          ball.speedX = -ball.speedX;
+        }
+        if (ball.y - ballRadius < 0) {
+          ball.speedY = -ball.speedY;
+        }
+
+    // Check if the ball hit the paddle
+      if (ball.y + ballRadius > canvas.height - paddleHeight && ball.x > paddleX && ball.x < paddleX + paddleWidth) {
+        if (currentBalancedBall && ball.color === currentBalancedBall.color) {
+        // Increment the score if the player catches the correct ball
+          if (!ballCollidedWithPaddle) {
+            incrementScore();
+            ballCollidedWithPaddle = true;}} 
+          else {
+        // Decrement the score if the player catches the wrong ball
+            decrementScore();
+            ballCollidedWithPaddle = true;
+          }} else {
+      ballCollidedWithPaddle = false; // Reset the flag if the ball is not colliding with the paddle
+    }
+  });
+
+      // Update the timer and calculate the elapsed time
+      if (startTime === null) {
+        startTime = new Date();
+        lastBallSpawnTime = startTime; // Initialize the last ball spawn time
+        lastBallBalanceTime = startTime; // Initialize the last ball balance time
+      } else {
+        const currentTime = new Date();
+        const elapsedTime = (currentTime - startTime) / 1000; // Convert to seconds
+        remainingTime = Math.max(0, gameDuration - elapsedTime);
+
+        // Check if time is over
+        if (remainingTime === 0 && currentBalancedBall && !selectedBallFallen) {
+          endGame("Congratulations! You Won");
+        }
+      }
+
+      // Spawn a new ball after a certain interval
+      if (startTime !== null) {
+        const currentTime = new Date();
+        const elapsedSpawnTime = (currentTime - lastBallSpawnTime) / 1000; // Convert to seconds
+        const elapsedBalanceTime = (currentTime - lastBallBalanceTime) / 1000; // Convert to seconds
+
+        if (elapsedSpawnTime >= ballSpawnInterval) {
+          spawnRandomBall();
+          lastBallSpawnTime = currentTime; // Update the last ball spawn time
+        }
+
+        if (elapsedBalanceTime >= ballBalanceInterval) {
+          selectBallAndInstruction();
+          lastBallBalanceTime = currentTime; // Update the last ball balance time
+        }
+      }
+
+      // Display the timer
+      displayTimer();
+    }
+
+    // Function to display instruction messages
+    let instructionDisplayed = false;
+
+    function displayInstructionMessage(message) {
+      if (!instructionDisplayed) {
+        instructionDisplayed = true;
+        const messageElement = document.getElementById("message");
+        messageElement.textContent = message;
+        messageElement.style.display = "block"; // Show the message
+        setTimeout(() => {
+          hideMessage();
+          instructionDisplayed = false; // Set the flag to false after hiding the message
+        }, 5000); // Hide the message after 5 seconds
+      }
+    }
+
+    // Function to hide the message
+    function hideMessage() {
+      const messageElement = document.getElementById("message");
+      messageElement.style.display = "none"; // Hide the message
+    }
+
+    // Add event listener to the canvas for the "Try Again" action
+    canvas.addEventListener("click", () => {
+      if (gameOver) {
+        startNewGame();
+      }
+    });
+
+    // Start the game initially
+    startNewGame();
+  </script>
+</body>
+</html
